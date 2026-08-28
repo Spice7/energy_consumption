@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EV 에너지 소비량 시뮬레이터</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}?v=2">
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">MODEL-BASED EV ENERGY LAB</p>
+      <h1>운행 조건별<br><span>에너지 소비량</span> 예측</h1>
+      <p class="lead">저장된 머신러닝 모델로 현재 계획을 살펴보고, 대안 조건의 예상 소비량을 나란히 비교하세요.</p>
+    </div>
+    <div class="hero-note">실습용 모델 기반 예측<br>실제 운영 의사결정에는 추가 검증이 필요합니다.</div>
+  </header>
+
+  <main>
+    <nav class="tabs" aria-label="기능 선택">
+      <button class="tab active" data-tab="prediction">소비량 예측</button>
+      <button class="tab" data-tab="simulation">조건별 시뮬레이션</button>
+    </nav>
+
+    <section id="prediction" class="panel active">
+      <div class="section-heading">
+        <div><span class="step">01</span><h2>운행 조건 입력</h2></div>
+        <p>학습 데이터 관측 범위 밖의 값도 입력할 수 있으며, 해당 결과에는 경고가 표시됩니다.</p>
+      </div>
+      <form id="prediction-form" class="condition-form" data-prefix="prediction"></form>
+      <div id="prediction-error" class="error" role="alert" hidden></div>
+      <button class="primary" type="submit" form="prediction-form">예상 소비량 계산</button>
+      <div id="prediction-result" class="result-grid" hidden>
+        <article class="metric accent"><span>예상 소비량</span><strong id="prediction-consumption"></strong><small>kWh/100km</small></article>
+        <article class="metric"><span>주행 거리 기준 예상 총소비 에너지</span><strong id="prediction-total"></strong><small>kWh</small></article>
+      </div>
+      <div id="prediction-warning" class="warning" role="status" hidden></div>
+    </section>
+
+    <section id="simulation" class="panel">
+      <div class="section-heading">
+        <div><span class="step">02</span><h2>현재 계획과 대안 비교</h2></div>
+        <p>동일한 저장 모델에 서로 다른 두 조건을 입력해 결과를 비교합니다.</p>
+      </div>
+      <form id="simulation-form">
+        <div class="scenario-grid">
+          <fieldset><legend><span>A</span> 현재 계획</legend><div id="current-form" class="condition-form" data-prefix="current"></div></fieldset>
+          <fieldset><legend><span>B</span> 대안 계획</legend><div id="alternative-form" class="condition-form" data-prefix="alternative"></div></fieldset>
+        </div>
+        <div id="simulation-error" class="error" role="alert" hidden></div>
+        <button class="primary" type="submit">두 계획 비교하기</button>
+      </form>
+      <div id="simulation-result" hidden>
+        <div class="result-grid comparison">
+          <article class="metric"><span>현재 계획 예상 소비량</span><strong id="current-consumption"></strong><small>kWh/100km · 총 <b id="current-total"></b> kWh</small></article>
+          <article class="metric accent"><span>대안 계획 예상 소비량</span><strong id="alternative-consumption"></strong><small>kWh/100km · 총 <b id="alternative-total"></b> kWh</small></article>
+          <article class="metric"><span>소비량 차이 (대안 − 현재)</span><strong id="difference"></strong><small>kWh/100km</small></article>
+          <article class="metric saving"><span>예상 절감률</span><strong id="savings"></strong><small id="simulation-message"></small></article>
+        </div>
+        <div id="simulation-warning" class="warning" role="status" hidden></div>
+      </div>
+    </section>
+
+    <section class="factors">
+      <div class="section-heading">
+        <div><span class="step">03</span><h2>소비량과 관련된 주요 요인</h2></div>
+        <p>저장된 XGBoost 모델의 Feature Importance 기준입니다.</p>
+      </div>
+      <div class="factor-list">
+        {% for factor in factors %}
+        <div class="factor-row">
+          <span class="rank">0{{ loop.index }}</span><span class="factor-name">{{ factor.label }}</span>
+          <div class="bar"><i style="width: {{ factor.importance * 100 }}%"></i></div><b>{{ "%.1f"|format(factor.importance * 100) }}%</b>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="disclaimer">높은 중요도의 조건은 높은 소비량 예측과 관련된 주요 조건일 수 있습니다. Feature Importance는 모델이 예측에 활용한 상대적 비중이며 인과관계를 의미하지 않습니다.</p>
+    </section>
+  </main>
+  <footer>EV ENERGY LAB · 교육 및 실습 목적</footer>
+  <script src="{{ url_for('static', path='/app.js') }}?v=2"></script>
+</body>
+</html>
